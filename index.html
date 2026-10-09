@@ -103,9 +103,6 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
 
   .prop-card { transition: transform .35s ease, box-shadow .35s ease; }
   .prop-card:hover { transform: translateY(-6px); }
-  .prop-img-wrap { overflow: hidden; }
-  .prop-img-wrap img { transition: transform .6s ease; }
-  .prop-card:hover .prop-img-wrap img { transform: scale(1.08); }
 
   .skeleton {
     background: linear-gradient(90deg, #EFE9DD 25%, #F8F5EF 37%, #EFE9DD 63%);
@@ -160,7 +157,7 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
     font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 12px;
     padding: 4px 14px 4px 10px;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 70%);
-    z-index: 20;
+    z-index: 25;
   }
 
   .whatsapp-float { box-shadow: 0 8px 24px -6px rgba(37,211,102,0.55); }
@@ -497,7 +494,7 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
       </div>
       <div>
         <h3 class="font-display font-700 text-ink text-lg mb-2">2. البيانات التي نجمعها</h3>
-        <p>قد نجمع بيانات مثل الاسم، رقم الهاتف، البريد الإلكتروني عند تواصلك معنا عبر نماذج الموقع أو واتساب، بالإضافة إلى بيانات تصفح عامة (مثل نوع الجهاز والمتصفح) لتحسين تجربة الاستخدام.</p>
+        <p>قد نجمع بيانات مثل الاسم، رقم الهاتف، البريد الإلكتروني عند تواصلك معنا عبر نماذج الموقع أو واتساب، بالإضافة إلى بيانات تصفح عامة (مثل نوع الجهاز ومتصفح) لتحسين تجربة الاستخدام.</p>
       </div>
       <div>
         <h3 class="font-display font-700 text-ink text-lg mb-2">3. ملفات تعريف الارتباط (Cookies) وأدوات التتبع</h3>
@@ -830,10 +827,11 @@ function jsonToProperties(records) {
     const category = getJsonValue(rec, ['القسم']);
     const description = getJsonValue(rec, ['الوصف']);
     const priceRaw = getJsonValue(rec, ['السعر']);
-    const imagesRaw = getJsonValue(rec, ['صور']);
+    const imagesRaw = getJsonValue(rec, ['صور', 'الصور', 'الصورة', 'images', 'Images']);
 
+    // 1. معالجة فواصل الروابط (Regex Image URL Split: comma or newline)
     const images = imagesRaw
-      .split(',')
+      .split(/[\r\n,]+/)
       .map(s => s.trim())
       .filter(Boolean)
       .map(u => sanitizeUrl(u, ''))
@@ -886,7 +884,6 @@ function jsonToProperties(records) {
    ============================================================ */
 function getStatusInfo(statusRaw, typeRaw) {
   const status = (statusRaw || 'متاح').toLowerCase().trim();
-  const type = (typeRaw || '').toLowerCase().trim();
 
   // تحديد لغة العميل/المتصفح تلقائياً
   const isEn = (document.documentElement.lang === 'en') || ((navigator.language || '').toLowerCase().startsWith('en'));
@@ -924,7 +921,7 @@ function getStatusInfo(statusRaw, typeRaw) {
 }
 
 /* ============================================================
-   واجهة العرض — بطاقات العقارات
+   واجهة العرض — بطاقات العقارات + سلايدر الكارت المصغر
    ============================================================ */
 function formatPrice(p) {
   if (!p) return 'السعر عند الطلب';
@@ -943,7 +940,7 @@ function propertyCallLink() {
 
 function renderCard(p) {
   const card = document.createElement('div');
-  card.className = 'prop-card fade-in bg-white rounded-md shadow-card overflow-hidden relative border border-creamdark/60';
+  card.className = 'prop-card group fade-in bg-white rounded-md shadow-card overflow-hidden relative border border-creamdark/60';
 
   const safeType = escapeHtml(p.type || 'عقار');
   const safeTitle = escapeHtml(p.title || ((p.type || '') + ' - ' + (p.location || '')));
@@ -952,25 +949,63 @@ function renderCard(p) {
   const safeInstallment = escapeHtml(p.installment || '');
   const safeDescription = escapeHtml(p.description || '');
   const safeUnitCode = escapeHtml(p.unitCode || '');
-  const safeImgSrc = sanitizeUrl(p.images[0], 'https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate');
-
   const statusInfo = getStatusInfo(p.status, p.type);
 
+  const imagesList = (p.images && p.images.length > 0) ? p.images : ['https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate'];
+  const hasMultipleImages = imagesList.length > 1;
+
+  // إعداد صور السلايدر
+  const slidesHtml = imagesList.map((img, idx) => `
+    <img src="${sanitizeUrl(img, 'https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate')}" 
+         alt="${safeTitle} - صورة ${idx + 1}" 
+         class="w-full h-full object-cover shrink-0 flex-none" 
+         loading="${idx === 0 ? 'eager' : 'lazy'}">
+  `).join('');
+
+  // إعداد نقاط السلايدر (Dots)
+  const dotsHtml = hasMultipleImages ? `
+    <div class="card-dots absolute bottom-2 right-1/2 translate-x-1/2 z-20 flex gap-1 bg-ink/50 backdrop-blur-sm px-2 py-1 rounded-full">
+      ${imagesList.map((_, idx) => `
+        <button type="button" class="dot-btn w-1.5 h-1.5 rounded-full transition-all ${idx === 0 ? 'bg-gold w-3' : 'bg-white/60'}" data-slide-idx="${idx}" aria-label="صورة ${idx + 1}"></button>
+      `).join('')}
+    </div>
+  ` : '';
+
+  // إعداد أسهم التنقل (Arrows)
+  const arrowsHtml = hasMultipleImages ? `
+    <button type="button" class="card-prev-btn absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-ink/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gold hover:text-ink" aria-label="الصورة السابقة">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <button type="button" class="card-next-btn absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-ink/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gold hover:text-ink" aria-label="الصورة التالية">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></svg>
+    </button>
+  ` : '';
+
   card.innerHTML = `
-    <a href="#unit-${p.slug}" class="prop-img-wrap relative h-56 block" data-open-detail="${p.id}">
-      <!-- الباج الأول (يمين الصورة): نوع الوحدة -->
+    <div class="prop-img-wrap relative h-56 w-full overflow-hidden" data-card-id="${p.id}">
+      <!-- الباج الأول (أعلى يمين الصورة): نوع الوحدة -->
       <span class="badge-ribbon">${safeType}</span>
-      
-      <!-- الباج الثاني (يسار الصورة): حالة العقار -->
-      <span class="absolute top-3.5 left-3.5 z-20 px-3 py-1 rounded-sm text-xs font-display font-700 tracking-wide ${statusInfo.badgeClass}">
+
+      <!-- الباج الثاني (أسفل يسار الصورة): حالة العقار -->
+      <span class="absolute bottom-3 left-3 z-20 px-3 py-1 rounded-sm text-xs font-display font-700 tracking-wide ${statusInfo.badgeClass}">
         ${escapeHtml(statusInfo.label)}
       </span>
 
       <!-- طبقة شفافة على الصورة في حال كان العقار غير متاح (مباع / مؤجر) -->
       ${statusInfo.isUnavailable ? `<div class="absolute inset-0 bg-ink/35 backdrop-grayscale-[25%] z-10 pointer-events-none"></div>` : ''}
 
-      <img src="${safeImgSrc}" alt="${safeTitle}" class="w-full h-full object-cover" loading="lazy">
-    </a>
+      <!-- حاوي صور السلايدر -->
+      <a href="#unit-${p.slug}" class="block w-full h-full cursor-pointer" data-open-detail="${p.id}">
+        <div class="card-slides flex w-full h-full transition-transform duration-300 ease-out" dir="ltr" style="transform: translateX(0%);">
+          ${slidesHtml}
+        </div>
+      </a>
+
+      <!-- الأسهم والنقاط -->
+      ${arrowsHtml}
+      ${dotsHtml}
+    </div>
+
     <div class="p-6">
       <div class="flex items-center justify-between mb-3">
         <span class="font-display font-900 text-gold-dark text-lg">${escapeHtml(formatPrice(p.price))}</span>
@@ -1001,6 +1036,74 @@ function renderCard(p) {
       </div>
     </div>
   `;
+
+  // تفعيل منطق السلايدر بداخل الكارت
+  if (hasMultipleImages) {
+    let currentIdx = 0;
+    const slidesContainer = card.querySelector('.card-slides');
+    const dots = card.querySelectorAll('.dot-btn');
+    const prevBtn = card.querySelector('.card-prev-btn');
+    const nextBtn = card.querySelector('.card-next-btn');
+
+    const goToSlide = (index) => {
+      currentIdx = (index + imagesList.length) % imagesList.length;
+      slidesContainer.style.transform = `translateX(-${currentIdx * 100}%)`;
+      dots.forEach((dot, idx) => {
+        if (idx === currentIdx) {
+          dot.className = 'dot-btn w-3 h-1.5 rounded-full bg-gold transition-all';
+        } else {
+          dot.className = 'dot-btn w-1.5 h-1.5 rounded-full bg-white/60 transition-all';
+        }
+      });
+    };
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        goToSlide(currentIdx - 1);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        goToSlide(currentIdx + 1);
+      });
+    }
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = parseInt(dot.dataset.slideIdx, 10);
+        goToSlide(idx);
+      });
+    });
+
+    // دعم السحب باللمس على الموبايل (Touch Swipe)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const wrap = card.querySelector('.prop-img-wrap');
+
+    wrap.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    wrap.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchEndX - touchStartX;
+      if (Math.abs(diff) > 35) {
+        if (diff < 0) {
+          goToSlide(currentIdx + 1); // سحب لليار -> الصورة التالية
+        } else {
+          goToSlide(currentIdx - 1); // سحب لليمين -> الصورة السابقة
+        }
+      }
+    }, { passive: true });
+  }
+
   return card;
 }
 
@@ -1016,7 +1119,10 @@ function renderGrid(list) {
   list.forEach(p => propertyGrid.appendChild(renderCard(p)));
 
   propertyGrid.querySelectorAll('[data-open-detail]').forEach(el => {
-    el.addEventListener('click', () => openDetailModal(parseInt(el.dataset.openDetail)));
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.card-prev-btn') || e.target.closest('.card-next-btn') || e.target.closest('.dot-btn')) return;
+      openDetailModal(parseInt(el.dataset.openDetail));
+    });
   });
 }
 
