@@ -160,6 +160,7 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
     font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 12px;
     padding: 4px 14px 4px 10px;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 70%);
+    z-index: 20;
   }
 
   .whatsapp-float { box-shadow: 0 8px 24px -6px rgba(37,211,102,0.55); }
@@ -817,6 +818,13 @@ function jsonToProperties(records) {
   records.forEach((rec, i) => {
     if (!rec || typeof rec !== 'object') return;
 
+    // 1. الفلترة الذكية (Filtering): استثناء "مخفي" أو "hidden"
+    const statusRaw = getJsonValue(rec, ['حالة العقار', 'الحالة', 'status', 'Status']);
+    const statusClean = statusRaw.toLowerCase().trim();
+    if (statusClean === 'مخفي' || statusClean === 'hidden') {
+      return; // عدم عرض العقار تماماً
+    }
+
     const unitCode = getJsonValue(rec, ['كود الوحدة', 'كود العقار', 'الكود']);
     const unitType = getJsonValue(rec, ['نوع الوحدة']);
     const category = getJsonValue(rec, ['القسم']);
@@ -834,6 +842,18 @@ function jsonToProperties(records) {
 
     const rowId = Number(rec.row_number) || (i + 1);
 
+    // 2. ترتيب العرض حسب التحديث (Boosting)
+    const updatedAtRaw = getJsonValue(rec, ['updated_at', 'timestamp', 'updatedAt', 'تاريخ التحديث', 'التحديث', 'order', 'boost']);
+    let timestamp = 0;
+    if (updatedAtRaw) {
+      const parsed = Date.parse(updatedAtRaw);
+      if (!isNaN(parsed)) {
+        timestamp = parsed;
+      } else {
+        timestamp = parseFloat(updatedAtRaw) || 0;
+      }
+    }
+
     data.push({
       id: rowId,
       unitCode: unitCode,
@@ -848,11 +868,59 @@ function jsonToProperties(records) {
       rooms: getJsonValue(rec, ['عدد الغرف']),
       installment: getJsonValue(rec, ['تقسيط', 'السداد']),
       description: description,
+      status: statusRaw || 'متاح',
+      timestamp: timestamp,
       phone: getJsonValue(rec, ['رقم التواصل', 'رقم الهاتف', 'التواصل', 'هاتف', 'جوال', 'واتساب']) || extractPhoneFromText(description),
       images: images.length ? images : ['https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate'],
     });
   });
+
+  // الترتيب الافتراضي حسب الأحدث / التحديث (Boosting)
+  data.sort((a, b) => b.timestamp - a.timestamp);
+
   return data;
+}
+
+/* ============================================================
+   حالة العقار — التنسيق والدعم متعدد اللغات (I18n / Localization)
+   ============================================================ */
+function getStatusInfo(statusRaw, typeRaw) {
+  const status = (statusRaw || 'متاح').toLowerCase().trim();
+  const type = (typeRaw || '').toLowerCase().trim();
+
+  // تحديد لغة العميل/المتصفح تلقائياً
+  const isEn = (document.documentElement.lang === 'en') || ((navigator.language || '').toLowerCase().startsWith('en'));
+
+  let label = isEn ? 'Available' : 'متاح';
+  let badgeClass = 'bg-emerald-dark/85 text-emerald-100 border border-emerald-400/30 backdrop-blur-sm shadow-sm';
+  let isUnavailable = false;
+
+  if (status === 'متاح' || status === 'available') {
+    label = isEn ? 'Available' : 'متاح';
+    badgeClass = 'bg-emerald-dark/85 text-emerald-100 border border-emerald-400/30 backdrop-blur-sm shadow-sm';
+  } else if (status === 'تم البيع' || status === 'مباع' || status === 'sold') {
+    label = isEn ? 'Sold' : 'تم البيع';
+    badgeClass = 'bg-red-950/85 text-red-200 border border-red-500/30 backdrop-blur-sm shadow-sm';
+    isUnavailable = true;
+  } else if (status === 'تم الإيجار' || status === 'مؤجر' || status === 'rented') {
+    label = isEn ? 'Rented' : 'تم الإيجار';
+    badgeClass = 'bg-amber-950/85 text-amber-200 border border-amber-500/30 backdrop-blur-sm shadow-sm';
+    isUnavailable = true;
+  } else if (status) {
+    if (status.includes('بيع') || status.includes('sold')) {
+      label = isEn ? 'Sold' : 'تم البيع';
+      badgeClass = 'bg-red-950/85 text-red-200 border border-red-500/30 backdrop-blur-sm shadow-sm';
+      isUnavailable = true;
+    } else if (status.includes('إيجار') || status.includes('rent')) {
+      label = isEn ? 'Rented' : 'تم الإيجار';
+      badgeClass = 'bg-amber-950/85 text-amber-200 border border-amber-500/30 backdrop-blur-sm shadow-sm';
+      isUnavailable = true;
+    } else {
+      label = statusRaw;
+    }
+  }
+
+  return { label, badgeClass, isUnavailable };
 }
 
 /* ============================================================
@@ -886,9 +954,21 @@ function renderCard(p) {
   const safeUnitCode = escapeHtml(p.unitCode || '');
   const safeImgSrc = sanitizeUrl(p.images[0], 'https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate');
 
+  const statusInfo = getStatusInfo(p.status, p.type);
+
   card.innerHTML = `
     <a href="#unit-${p.slug}" class="prop-img-wrap relative h-56 block" data-open-detail="${p.id}">
+      <!-- الباج الأول (يمين الصورة): نوع الوحدة -->
       <span class="badge-ribbon">${safeType}</span>
+      
+      <!-- الباج الثاني (يسار الصورة): حالة العقار -->
+      <span class="absolute top-3.5 left-3.5 z-20 px-3 py-1 rounded-sm text-xs font-display font-700 tracking-wide ${statusInfo.badgeClass}">
+        ${escapeHtml(statusInfo.label)}
+      </span>
+
+      <!-- طبقة شفافة على الصورة في حال كان العقار غير متاح (مباع / مؤجر) -->
+      ${statusInfo.isUnavailable ? `<div class="absolute inset-0 bg-ink/35 backdrop-grayscale-[25%] z-10 pointer-events-none"></div>` : ''}
+
       <img src="${safeImgSrc}" alt="${safeTitle}" class="w-full h-full object-cover" loading="lazy">
     </a>
     <div class="p-6">
@@ -969,8 +1049,15 @@ function applyFilters() {
     (p.location || '').toLowerCase().includes(q) ||
     (p.description || '').toLowerCase().includes(q)
   );
-  if (s === 'asc') list.sort((a, b) => a.priceNumeric - b.priceNumeric);
-  if (s === 'desc') list.sort((a, b) => b.priceNumeric - a.priceNumeric);
+
+  if (s === 'asc') {
+    list.sort((a, b) => a.priceNumeric - b.priceNumeric);
+  } else if (s === 'desc') {
+    list.sort((a, b) => b.priceNumeric - a.priceNumeric);
+  } else {
+    // الترتيب حسب التحديث (Boosting)
+    list.sort((a, b) => b.timestamp - a.timestamp);
+  }
 
   renderGrid(list);
 }
