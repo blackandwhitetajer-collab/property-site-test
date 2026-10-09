@@ -817,10 +817,38 @@ function t(key) {
   return v !== undefined ? v : (I18N.ar[key] !== undefined ? I18N.ar[key] : key);
 }
 
+/* قاموس المصطلحات المتكررة (يُستخدم في وضع EN فقط، والأعمدة الإنجليزية في الشيت لها الأولوية) */
+const TERMS = {
+  'تاون هاوس': 'Townhouse', 'توين هاوس': 'Twin House', 'شقة': 'Apartment', 'فيلا': 'Villa', 'دوبلكس': 'Duplex',
+  'بنتهاوس': 'Penthouse', 'استوديو': 'Studio', 'ستوديو': 'Studio', 'محل': 'Shop', 'مكتب': 'Office', 'عيادة': 'Clinic', 'أرض': 'Land',
+  'للبيع': 'for Sale', 'للإيجار': 'for Rent', 'للايجار': 'for Rent', 'المفروش': 'Furnished', 'مفروش': 'Furnished',
+  'قانون جديد': 'New Law', 'قانون قديم': 'Old Law', 'سكني': 'Residential', 'تجاري': 'Commercial', 'إداري': 'Administrative',
+  'متاح': 'Available', 'تم البيع': 'Sold', 'مباع': 'Sold', 'تم الإيجار': 'Rented', 'مؤجر': 'Rented', 'محجوز': 'Reserved',
+  'كاش': 'Cash', 'تقسيط': 'Installments',
+  'حي الأشجار': 'Al Ashgar District', 'أشجار هايتس': 'Ashgar Heights', 'دريم لاند': 'Dream Land',
+  'الشيخ زايد': 'Sheikh Zayed', 'حدائق أكتوبر': 'October Gardens', '6 أكتوبر': '6th of October',
+  'أمام': 'Opposite', '،': ','
+};
+function trText(str) {
+  if (!str) return '';
+  let out = String(str);
+  Object.keys(TERMS).sort((a, b) => b.length - a.length).forEach(k => { out = out.split(k).join(TERMS[k]); });
+  return out.replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').trim();
+}
 function areaLabel(name) {
   if (currentLang !== 'en') return name;
   const a = FOCUS_AREAS.find(x => x.name === name);
-  return a ? a.en : name;
+  return a ? a.en : trText(name);
+}
+const isEn = () => currentLang === 'en';
+function dType(p)  { return isEn() ? (p.typeEn || trText(p.type)) : p.type; }
+function dLoc(p)   { return isEn() ? (p.locationEn || areaLabel(p.location)) : p.location; }
+function dDesc(p)  { return isEn() ? (p.descEn || p.description) : p.description; }
+function dInst(p)  { return isEn() ? trText(p.installment) : p.installment; }
+function fmtArea(a) {
+  if (!a) return '—';
+  const n = String(a).replace(/\s*(م²|م2|م|m²|m2|sqm)\s*$/i, '').trim();
+  return n + ' ' + t('sqm');
 }
 
 /* ============================================================
@@ -940,6 +968,13 @@ function enhanceCloudinaryUrl(url) {
   return url.replace('/upload/', '/upload/q_auto:best,f_auto,e_sharpen:60,e_improve/');
 }
 
+const CLD_FULL = 'upload/q_auto:best,f_auto,e_sharpen:60,e_improve/';
+/* نسخة مصغرة من الصورة (للكروت والمصغرات) — الصورة الأصلية تبقى للـ Lightbox */
+function sizedUrl(url, width) {
+  if (!url || !url.includes(CLD_FULL)) return url;
+  return url.replace(CLD_FULL, `upload/w_${width},c_limit,q_auto:good,f_auto,e_sharpen:40/`);
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -961,6 +996,8 @@ function findJsonKey(obj, keywords) {
   const keys = Object.keys(obj || {});
   for (const key of keys) {
     const trimmedKey = key.trim();
+    const isEnKey = /(\s|_)en$/i.test(trimmedKey);
+    if (isEnKey && !keywords.some(k => /(\s|_)en$/i.test(k))) continue;
     if (keywords.some(k => trimmedKey.includes(k))) return key;
   }
   return null;
@@ -1004,14 +1041,14 @@ function jsonToProperties(records) {
     const rowId = Number(rec.row_number) || (i + 1);
 
     // الترتيب حسب حقل التحديث updated_at (Boosting)
-    const updatedAtRaw = getJsonValue(rec, ['updated_at', 'timestamp', 'updatedAt', 'تاريخ التحديث', 'التحديث', 'order', 'boost']);
+    const updatedAtRaw = getJsonValue(rec, ['اخر تحديث', 'آخر تحديث', 'أخر تحديث', 'updated_at', 'timestamp', 'updatedAt', 'تاريخ التحديث', 'التحديث', 'تحديث', 'order', 'boost']);
     let timestamp = 0;
     if (updatedAtRaw) {
-      const parsed = Date.parse(updatedAtRaw);
-      if (!isNaN(parsed)) {
-        timestamp = parsed;
+      if (/^\d+(\.\d+)?$/.test(updatedAtRaw)) {
+        timestamp = parseFloat(updatedAtRaw);          // رقم (ميلي ثانية) كما يكتبه n8n
       } else {
-        timestamp = parseFloat(updatedAtRaw) || 0;
+        const parsed = Date.parse(updatedAtRaw);
+        timestamp = !isNaN(parsed) ? parsed : 0;
       }
     }
 
@@ -1030,6 +1067,10 @@ function jsonToProperties(records) {
       installment: getJsonValue(rec, ['تقسيط', 'السداد']),
       description: description,
       status: statusRaw,
+      typeEn: getJsonValue(rec, ['Type EN', 'type_en']),
+      descEn: getJsonValue(rec, ['Description EN', 'description_en']),
+      locationEn: getJsonValue(rec, ['Location EN', 'location_en']),
+      statusEn: getJsonValue(rec, ['Status EN', 'status_en']),
       timestamp: timestamp,
       phone: getJsonValue(rec, ['رقم التواصل', 'رقم الهاتف', 'التواصل', 'هاتف', 'جوال', 'واتساب']) || extractPhoneFromText(description),
       images: images.length ? images : ['https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate'],
@@ -1045,7 +1086,7 @@ function jsonToProperties(records) {
 /* ============================================================
    حالة العقار — يقرأ النص العربي من الشيت كما هو بدون ترجمة
    ============================================================ */
-function getStatusInfo(statusRaw) {
+function getStatusInfo(statusRaw, statusEn) {
   const raw = (statusRaw || '').trim();
   const status = raw.toLowerCase();
 
@@ -1063,7 +1104,7 @@ function getStatusInfo(statusRaw) {
   }
 
   // النص يظهر كما هو في الشيت؛ فقط إذا كان الحقل فارغاً نعرض "متاح"
-  const label = raw || t('available');
+  const label = raw ? (currentLang === 'en' ? (statusEn || trText(raw)) : raw) : t('available');
   return { label, badgeClass, isUnavailable };
 }
 
@@ -1147,12 +1188,18 @@ function updateNotifUI() {
    ============================================================ */
 function formatPrice(p) {
   if (!p) return t('price_on_request');
-  return /[a-zA-Zء-ي]/.test(p) ? p : p + ' ' + t('currency');
+  const rest = String(p).replace(/[\d.,\s]|egp|جنيه|ج\.م\.?|£/gi, '');
+  const num = parseFloat(String(p).replace(/[^0-9.]/g, ''));
+  if (!rest && num) {
+    const f = num.toLocaleString('en-US');
+    return isEn() ? 'EGP ' + f : f + ' ' + t('currency');
+  }
+  return p;
 }
 
 function propertyWhatsLink(p) {
   const num = (p.phone || WHATSAPP_NUMBER).replace(/[^0-9]/g, '');
-  const msg = I18N[currentLang].wa_property(p.title || p.type, p.location);
+  const msg = I18N[currentLang].wa_property(p.title || dType(p), dLoc(p));
   return num ? `https://wa.me/${num}?text=${encodeURIComponent(msg)}` : '#';
 }
 
@@ -1162,16 +1209,17 @@ function propertyCallLink() {
 
 function renderCard(p) {
   const card = document.createElement('div');
+  card.dataset.slug = p.slug;
   card.className = 'prop-card group fade-in bg-white rounded-md shadow-card overflow-hidden relative border border-creamdark/60';
 
-  const safeType = escapeHtml(p.type || t('property'));
-  const safeTitle = escapeHtml(p.title || ((p.type || '') + ' - ' + (p.location || '')));
-  const safeLocation = escapeHtml(p.location ? areaLabel(p.location) : '—');
-  const safeArea = p.area ? escapeHtml(p.area) + ' ' + t('sqm') : '—';
-  const safeInstallment = escapeHtml(p.installment || '');
-  const safeDescription = escapeHtml(p.description || '');
+  const safeType = escapeHtml(dType(p) || t('property'));
+  const safeTitle = escapeHtml(p.title || ((dType(p) || '') + ' - ' + (dLoc(p) || '')));
+  const safeLocation = escapeHtml(p.location ? dLoc(p) : '—');
+  const safeArea = escapeHtml(fmtArea(p.area));
+  const safeInstallment = escapeHtml(dInst(p) || '');
+  const safeDescription = escapeHtml(dDesc(p) || '');
   const safeUnitCode = escapeHtml(p.unitCode || '');
-  const statusInfo = getStatusInfo(p.status);
+  const statusInfo = getStatusInfo(p.status, p.statusEn);
   const isFav = favorites.has(p.slug);
 
   const imagesList = (p.images && p.images.length > 0) ? p.images : ['https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate'];
@@ -1179,7 +1227,7 @@ function renderCard(p) {
 
   // صور السلايدر
   const slidesHtml = imagesList.map((img, idx) => `
-    <img src="${sanitizeUrl(img, 'https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate')}" 
+    <img src="${sizedUrl(sanitizeUrl(img, 'https://placehold.co/800x600/EFE9DD/66766E?text=Trust+Estate'), 800)}" 
          alt="${safeTitle} - ${t('img_alt')} ${idx + 1}" 
          class="w-full h-full object-cover shrink-0 flex-none" 
          loading="${idx === 0 ? 'eager' : 'lazy'}">
@@ -1375,7 +1423,7 @@ function populateFilters(list) {
   const knownAreas = FOCUS_AREAS.map(a => a.name);
   const locations = [...new Set([...knownAreas, ...locationsFromSheet])];
 
-  filterType.innerHTML = `<option value="">${t('filter_all_types')}</option>` + types.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  filterType.innerHTML = `<option value="">${t('filter_all_types')}</option>` + types.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(isEn() ? trText(x) : x)}</option>`).join('');
   filterLocation.innerHTML = `<option value="">${t('filter_all_areas')}</option>` + locations.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(areaLabel(l))}</option>`).join('');
 
   if ([...filterType.options].some(o => o.value === prevType)) filterType.value = prevType;
@@ -1418,12 +1466,49 @@ searchInput.addEventListener('input', () => { clearTimeout(window._searchDebounc
 /* ============================================================
    جلب البيانات من n8n Webhook عبر POST
    ============================================================ */
+let firstRender = true;
+const CACHE_KEY = 'te_cache_v1';
+
+function readCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    return c && Array.isArray(c.records) && c.records.length ? c.records : null;
+  } catch (e) { return null; }
+}
+function writeCache(records) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), records })); } catch (e) {}
+}
+
+function showRecords(records) {
+  allProperties = jsonToProperties(records);
+  loadingState.classList.add('hidden');
+  errorState.classList.add('hidden');
+
+  if (!allProperties.length) {
+    propertyGrid.classList.remove('hidden');
+    renderGrid([]);
+    return;
+  }
+
+  populateFilters(allProperties);
+  applyFilters();
+  if (firstRender) { firstRender = false; handleHashRoute(); }
+  updateNotifUI();
+}
+
 async function loadProperties() {
-  loadingState.classList.remove('hidden');
+  // عرض آخر بيانات محفوظة فوراً (إن وُجدت) ثم تحديثها من السيرفر في الخلفية
+  const cached = readCache();
+  const hadCache = !!cached;
   setupNotice.classList.add('hidden');
   errorState.classList.add('hidden');
-  propertyGrid.classList.add('hidden');
-  emptyState.classList.add('hidden');
+  if (hadCache) {
+    showRecords(cached);
+  } else {
+    loadingState.classList.remove('hidden');
+    propertyGrid.classList.add('hidden');
+    emptyState.classList.add('hidden');
+  }
 
   if (!WEBHOOK_URL || WEBHOOK_URL.startsWith('PUT_YOUR')) {
     loadingState.classList.add('hidden');
@@ -1463,24 +1548,15 @@ async function loadProperties() {
 
     if (!records) throw new Error('Unexpected data format');
 
-    allProperties = jsonToProperties(records);
-
-    loadingState.classList.add('hidden');
-
-    if (!allProperties.length) {
-      propertyGrid.classList.remove('hidden');
-      renderGrid([]);
-      return;
-    }
-
-    populateFilters(allProperties);
-    renderGrid(allProperties);
-    handleHashRoute();
-    updateNotifUI();
+    // لا نعيد الرسم إذا لم تتغير البيانات (يمنع وميض الكروت)
+    if (hadCache && JSON.stringify(records) === JSON.stringify(cached)) return;
+    writeCache(records);
+    showRecords(records);
   } catch (err) {
     clearTimeout(timeoutId);
     const isTimeout = err.name === 'AbortError';
     console.error('تعذر تحميل بيانات العقارات:', err);
+    if (hadCache) return; // نترك البيانات المحفوظة معروضة بدون رسالة خطأ
     loadingState.classList.add('hidden');
     lastErrorKey = isTimeout ? 'err_timeout' : 'err_conn';
     document.getElementById('errorMsg').textContent = t(lastErrorKey);
@@ -1546,13 +1622,13 @@ modalCopyLinkBtn.addEventListener('click', async () => {
 });
 
 function fillModalTexts(p) {
-  modalType.textContent = p.type || t('property');
+  modalType.textContent = dType(p) || t('property');
   modalPrice.textContent = formatPrice(p.price);
-  modalTitle.textContent = p.title || (p.type + ' - ' + p.location);
-  modalLocation.textContent = '📍 ' + (p.location ? areaLabel(p.location) : '—');
-  modalArea.textContent = '📐 ' + (p.area ? p.area + ' ' + t('sqm') : '—');
-  modalInstallment.textContent = p.installment ? '💳 ' + t('installment_modal') + p.installment : '💳 ' + t('cash');
-  modalDesc.textContent = p.description || t('no_desc');
+  modalTitle.textContent = p.title || (dType(p) + ' - ' + dLoc(p));
+  modalLocation.textContent = '📍 ' + (p.location ? dLoc(p) : '—');
+  modalArea.textContent = '📐 ' + fmtArea(p.area);
+  modalInstallment.textContent = p.installment ? '💳 ' + t('installment_modal') + dInst(p) : '💳 ' + t('cash');
+  modalDesc.textContent = dDesc(p) || t('no_desc');
   modalWhatsBtn.href = propertyWhatsLink(p);
   modalCallBtn.href = propertyCallLink(p);
   modalMapBtn.href = GOOGLE_MAPS_URL;
@@ -1565,6 +1641,7 @@ function openDetailModal(id) {
   currentProperty = p;
   currentImageIndex = 0;
 
+  trackPixel('ViewContent', { content_type: 'product', content_ids: [decodeURIComponent(p.slug)], content_name: dType(p) || '' });
   fillModalTexts(p);
   renderModalImage();
   renderModalThumbs();
@@ -1575,7 +1652,7 @@ function openDetailModal(id) {
 }
 
 function renderModalImage() {
-  modalMainImg.src = currentProperty.images[currentImageIndex];
+  modalMainImg.src = sizedUrl(currentProperty.images[currentImageIndex], 1400);
   modalMainImg.alt = currentProperty.title || currentProperty.type;
 }
 
@@ -1584,7 +1661,7 @@ function renderModalThumbs() {
   currentProperty.images.forEach((img, i) => {
     const btn = document.createElement('button');
     btn.className = 'thumb-btn shrink-0 w-20 h-16 rounded-sm overflow-hidden border-2' + (i === currentImageIndex ? ' active-thumb' : ' border-transparent');
-    btn.innerHTML = `<img src="${img}" class="w-full h-full object-cover" alt="thumbnail">`;
+    btn.innerHTML = `<img src="${sizedUrl(img, 200)}" class="w-full h-full object-cover" alt="thumbnail" loading="lazy">`;
     btn.addEventListener('click', () => { currentImageIndex = i; renderModalImage(); updateActiveThumb(); });
     modalThumbs.appendChild(btn);
   });
@@ -1700,6 +1777,37 @@ function setLang(lang) {
     fillModalTexts(currentProperty);
   }
 }
+
+/* ============================================================
+   Meta Pixel — تتبع أحداث التحويل (واتساب / اتصال / مشاهدة وحدة)
+   ============================================================ */
+function trackPixel(event, params) {
+  try { if (typeof fbq === 'function') fbq('track', event, params || {}); } catch (e) {}
+}
+
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('a[href]');
+  if (!a) return;
+  const href = a.getAttribute('href') || '';
+
+  // كود الوحدة: من الكارت أو من نافذة التفاصيل المفتوحة
+  let unit = '';
+  const card = a.closest('.prop-card');
+  if (card && card.dataset.slug) {
+    try { unit = decodeURIComponent(card.dataset.slug); } catch (err) { unit = card.dataset.slug; }
+  } else if (currentProperty && !detailModal.classList.contains('hidden')) {
+    try { unit = decodeURIComponent(currentProperty.slug); } catch (err) { unit = currentProperty.slug; }
+  }
+  const params = unit ? { content_ids: [unit], content_type: 'product' } : {};
+
+  if (href.startsWith('https://wa.me')) {
+    trackPixel('Lead', Object.assign({ content_name: 'WhatsApp' }, params));
+  } else if (href.startsWith('tel:')) {
+    trackPixel('Contact', Object.assign({ content_name: 'Call' }, params));
+  } else if (href.startsWith('mailto:')) {
+    trackPixel('Contact', Object.assign({ content_name: 'Email' }, params));
+  }
+}, true);
 
 document.getElementById('langBtn').addEventListener('click', () => {
   setLang(currentLang === 'ar' ? 'en' : 'ar');
