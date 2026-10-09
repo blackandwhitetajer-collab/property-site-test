@@ -6,9 +6,7 @@
 <title>Trust Estate | ترست إستيت - عقارات وتشطيبات بخبرة 15 عاماً</title>
 <meta name="description" content="Trust Estate - خبرة 15 عاماً في التشطيبات، البيع، اللوكيشن، والإيجار، في دريم لاند والشيخ زايد وحي الأشجار وأشجار هايتس وحدائق أكتوبر">
 
-<!-- ============================================================ -->
-<!-- Open Graph / Social Preview (WhatsApp, Facebook, Instagram)   -->
-<!-- ============================================================ -->
+<!-- Open Graph / Social Preview -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Trust Estate">
 <meta property="og:title" content="Trust Estate | ترست إستيت - عقارات وتشطيبات بخبرة 15 عاماً">
@@ -24,9 +22,7 @@
 
 <meta name="google-site-verification" content="1roQJ-BZmpxDTXL_F8FYQS4mkv58htZs8ARSzCx_ZLc" />
 
-<!-- ============================================================ -->
-<!-- Meta Pixel Code                                               -->
-<!-- ============================================================ -->
+<!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -130,19 +126,35 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
   .fade-in { animation: fadeIn .6s ease both; }
   @keyframes fadeIn { from { opacity:0; transform: translateY(14px);} to { opacity:1; transform: translateY(0);} }
 
-  .hero-lines { stroke: #C9A45C; stroke-width: 1; fill: none; opacity: .35; }
-  .hero-lines path { animation: heroDrift 9s ease-in-out infinite; }
-  .hero-lines path:nth-child(2) { animation-duration: 12s; animation-delay: -3s; }
-  .hero-lines circle { animation: heroPulse 3.2s ease-in-out infinite; transform-origin: center; }
-  .hero-lines circle:nth-of-type(2) { animation-delay: 1.1s; }
-  @keyframes heroDrift {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-14px); }
+  /* =========================================
+     أنيميشن رسم الخطوط الهندسية للمجسم العقاري
+     ========================================= */
+  .architectural-svg {
+    filter: drop-shadow(0 0 12px rgba(201, 164, 92, 0.25));
   }
-  @keyframes heroPulse {
-    0%, 100% { opacity: .8; r: 4; }
-    50% { opacity: .25; r: 7; }
+  .draw-line {
+    stroke-dasharray: 800;
+    stroke-dashoffset: 800;
+    animation: lineDrawing 6s ease-in-out infinite alternate;
   }
+  .draw-line-delay-1 { animation-delay: 0.4s; }
+  .draw-line-delay-2 { animation-delay: 0.8s; }
+  .draw-line-delay-3 { animation-delay: 1.2s; }
+
+  @keyframes lineDrawing {
+    0% { stroke-dashoffset: 800; opacity: 0.2; }
+    50% { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 0.8; }
+  }
+
+  .pulse-node {
+    animation: nodePulse 2.5s ease-in-out infinite alternate;
+  }
+  @keyframes nodePulse {
+    0% { transform: scale(0.8); opacity: 0.3; }
+    100% { transform: scale(1.3); opacity: 1; }
+  }
+
   .scroll-cue { animation: scrollBounce 2s ease-in-out infinite; }
   @keyframes scrollBounce {
     0%, 100% { transform: translateY(0); opacity: .6; }
@@ -169,10 +181,6 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
 
   .social-icon { transition: all .25s ease; }
   .social-icon:hover { background-color: #C9A45C; color: #0B1F1A; }
-
-  @media (max-width: 640px) {
-    .hero-headline { font-size: 2rem !important; line-height: 1.28 !important; }
-  }
 </style>
 </head>
 
@@ -236,56 +244,95 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
 </header>
 
 <!-- =============================== -->
-<!-- HERO                             -->
+<!-- HERO (WITH 3D BLUEPRINT MODEL)  -->
 <!-- =============================== -->
-<section id="home" class="relative bg-emerald-dark pt-40 pb-28 overflow-hidden">
-  <svg class="absolute inset-0 w-full h-full hero-lines" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice">
-    <path d="M0 550 L150 420 L260 460 L400 340 L520 400 L680 260 L820 330 L980 200 L1200 320" />
-    <path d="M0 620 L150 500 L260 540 L400 430 L520 480 L680 360 L820 420 L980 300 L1200 400" />
-    <circle cx="980" cy="200" r="4" fill="#C9A45C" stroke="none" opacity="0.8"/>
-    <circle cx="400" cy="340" r="4" fill="#C9A45C" stroke="none" opacity="0.8"/>
-  </svg>
+<section id="home" class="relative bg-emerald-dark pt-28 pb-14 md:pt-36 md:pb-20 overflow-hidden">
+  
+  <div class="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
+    <div class="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      
+      <!-- الجانب الأيمن: النصوص والشارات -->
+      <div class="lg:col-span-7 fade-in text-center lg:text-right">
+        
+        <!-- شارة أنيقة ومختصرة -->
+        <div class="inline-flex items-center gap-2 bg-white/5 border border-gold/30 backdrop-blur-md px-4 py-1.5 rounded-full text-gold text-xs font-display mb-4 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
+          ✨ ترست إستيت — وجهتك العقارية المتكاملة
+        </div>
 
-  <div class="max-w-7xl mx-auto px-5 md:px-8 relative">
-    <div class="grid lg:grid-cols-12 gap-10 items-end">
-      <div class="lg:col-span-7 fade-in">
-        <span class="inline-flex items-center gap-2 text-gold font-display text-xs tracking-[0.3em] mb-6">
-          <span class="w-8 h-px bg-gold"></span> عقارات نختارها بعناية، ونضمن لك الثقة فيها
-        </span>
-        <h1 class="hero-headline font-display font-900 text-cream text-4xl md:text-6xl leading-[1.15] mb-6">
-          نبني الثقة قبل أن<br class="hidden md:block"> نبني <span class="text-gold">العقار</span>
+        <!-- العنوان الرئيسي -->
+        <h1 class="hero-headline font-display font-900 text-cream text-3xl sm:text-4xl md:text-5xl leading-tight mb-4">
+          عنوانك القادم في أرقى <br class="hidden sm:block"> <span class="text-gold">الكمبوندات والمجتمعات السكنية</span>
         </h1>
-        <p class="text-cream/70 text-base md:text-lg leading-loose max-w-xl mb-10">
-          Trust Estate شريكك العقاري في التشطيبات والبيع واللوكيشن والإيجار،
-          نركّز على أرقى المناطق: دريم لاند، الشيخ زايد، حي الأشجار، أشجار هايتس، وحدائق أكتوبر.
+
+        <!-- الوصف المختصر -->
+        <p class="text-cream/80 text-sm md:text-base leading-relaxed max-w-lg mx-auto lg:mx-0 mb-6 font-body">
+          تغطية شاملة لأرقى الوحدات السكنية مع حلول تشطيب وإدارة عقارية احترافية.
         </p>
-        <div class="flex flex-wrap gap-4">
-          <a href="#properties" class="bg-gold hover:bg-gold-light text-emerald-dark font-display font-800 rounded-sm px-8 py-4 transition">تصفح العقارات</a>
-          <a id="heroWhatsBtn" href="#" target="_blank" rel="noopener" class="border border-cream/30 hover:border-gold hover:text-gold text-cream font-display font-700 rounded-sm px-8 py-4 transition flex items-center gap-2">
+
+        <!-- أزرار الدعوة للإجراء (Inline CTAs) -->
+        <div class="flex flex-row items-center justify-center lg:justify-start gap-3">
+          <a href="#properties" class="bg-gold hover:bg-gold-light text-emerald-dark font-display font-800 rounded-sm px-6 py-3.5 text-sm transition shadow-md">
+            تصفح الوحدات
+          </a>
+          <a id="heroWhatsBtn" href="#" target="_blank" rel="noopener" class="border border-cream/25 hover:border-gold hover:text-gold text-cream font-display font-700 rounded-sm px-5 py-3.5 text-sm transition flex items-center gap-2 bg-cream/5">
             <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2 22l5.07-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18a7.93 7.93 0 0 1-4.06-1.12l-.29-.17-3 .79.8-2.93-.19-.3A7.95 7.95 0 1 1 12 20zm4.4-5.9c-.24-.12-1.4-.7-1.62-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1-.37-1.9-1.18-.7-.62-1.18-1.4-1.32-1.64-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.2-.47-.4-.4-.54-.41-.14-.01-.3-.01-.46-.01-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.1.16 1.52.1.46-.07 1.4-.57 1.6-1.12.2-.55.2-1.02.14-1.12-.06-.1-.22-.16-.46-.28z"/></svg>
-            احجز استشارة مجانية
+            تواصل سريع
           </a>
         </div>
       </div>
 
-      <div class="lg:col-span-5">
-        <div class="grid grid-cols-2 gap-3 bg-cream/[0.04] border border-cream/10 rounded-md p-6 backdrop-blur">
-          <div class="text-center border-l border-cream/10 last:border-none">
-            <p id="statCount" class="font-display font-900 text-3xl text-gold">—</p>
-            <p class="text-cream/60 text-xs mt-2 font-display">عقار متاح</p>
-          </div>
-          <div class="text-center">
-            <p class="font-display font-900 text-3xl text-gold">5</p>
-            <p class="text-cream/60 text-xs mt-2 font-display">كمبوندات رئيسية</p>
+      <!-- الجانب الأيسر: رسم مجسم عقاري هندي مع خطوط برمجية سينمائية -->
+      <div class="lg:col-span-5 flex justify-center">
+        <div class="relative w-full max-w-md h-72 sm:h-80 flex items-center justify-center bg-cream/[0.02] border border-gold/20 rounded-xl p-4 backdrop-blur-sm overflow-hidden shadow-2xl">
+          
+          <!-- SVG المجسم المعماري المتحرك (Building Blueprint Drawing) -->
+          <svg class="architectural-svg w-full h-full" viewBox="0 0 500 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- شبكة الأفق الخلفية (Perspective Grid Lines) -->
+            <path d="M0 360 L500 360" stroke="#C9A45C" stroke-width="0.8" opacity="0.3"/>
+            <path d="M50 380 L250 280 L450 380" stroke="#C9A45C" stroke-width="0.5" opacity="0.25"/>
+            <path d="M250 100 L250 380" stroke="#C9A45C" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.3"/>
+
+            <!-- مجسم الفيلا/العقار - هيكل الخطوط الهندسية التي ترسم نفسها -->
+            <!-- المبنى الرئيسي -->
+            <polygon points="120,340 120,180 250,120 380,180 380,340" stroke="#C9A45C" stroke-width="2" class="draw-line" stroke-linecap="round"/>
+            <line x1="250" y1="120" x2="250" y2="340" stroke="#C9A45C" stroke-width="1.8" class="draw-line draw-line-delay-1"/>
+
+            <!-- الكتلة المودرن البارزة -->
+            <polygon points="160,340 160,200 340,200 340,340" stroke="#E4C989" stroke-width="1.5" class="draw-line draw-line-delay-2"/>
+            <line x1="160" y1="200" x2="120" y2="180" stroke="#C9A45C" stroke-width="1.2" class="draw-line"/>
+            <line x1="340" y1="200" x2="380" y2="180" stroke="#C9A45C" stroke-width="1.2" class="draw-line"/>
+
+            <!-- النوافذ الواسعة واللوحات الزجاجية -->
+            <rect x="180" y="220" width="50" height="80" stroke="#C9A45C" stroke-width="1" class="draw-line draw-line-delay-3" opacity="0.8"/>
+            <rect x="270" y="220" width="50" height="80" stroke="#C9A45C" stroke-width="1" class="draw-line draw-line-delay-3" opacity="0.8"/>
+            
+            <!-- سقف المظلة العصري (Pergola / Roof Line) -->
+            <line x1="100" y1="170" x2="400" y2="170" stroke="#C9A45C" stroke-width="2" class="draw-line"/>
+            
+            <!-- نقاط هندسية وضوء تجميع البرينت (Architectural Nodes) -->
+            <circle cx="250" cy="120" r="4" fill="#C9A45C" class="pulse-node"/>
+            <circle cx="120" cy="180" r="3" fill="#E4C989" class="pulse-node"/>
+            <circle cx="380" cy="180" r="3" fill="#E4C989" class="pulse-node"/>
+            <circle cx="160" cy="200" r="3.5" fill="#C9A45C" class="pulse-node"/>
+            <circle cx="340" cy="200" r="3.5" fill="#C9A45C" class="pulse-node"/>
+          </svg>
+
+          <!-- شريط إحصائي أنيق أسفل المجسم -->
+          <div class="absolute bottom-3 inset-x-3 bg-emerald-dark/80 border border-gold/30 rounded-md py-2 px-4 flex justify-between items-center text-xs font-display backdrop-blur-md">
+            <span class="text-gold font-700">دريم لاند • زايد • الأشجار</span>
+            <span id="statCount" class="text-cream font-800">— عقار متاح</span>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
-  <a href="#properties" class="scroll-cue absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-cream/50 hover:text-gold transition" aria-label="تصفح العقارات">
-    <span class="text-[10px] font-display tracking-[0.2em]">شوف الوحدات</span>
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+  <a href="#properties" class="scroll-cue absolute bottom-2 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-1 text-cream/40 hover:text-gold transition" aria-label="تصفح العقارات">
+    <span class="text-[9px] font-display tracking-[0.2em]">الوحدات</span>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
   </a>
 </section>
 
@@ -494,7 +541,7 @@ src="https://www.facebook.com/tr?id=988941216820297&ev=PageView&noscript=1"
       </div>
       <div>
         <h3 class="font-display font-700 text-ink text-lg mb-2">2. البيانات التي نجمعها</h3>
-        <p>قد نجمع بيانات مثل الاسم، رقم الهاتف، البريد الإلكتروني عند تواصلك معنا عبر نماذج الموقع أو واتساب، بالإضافة إلى بيانات تصفح عامة (مثل نوع الجهاز ومتصفح) لتحسين تجربة الاستخدام.</p>
+        <p>قد نجمع بيانات مثل الاسم، رقم الهاتف، البريد الإلكتروني عند تواصلك معنا عبر نماذج الموقع أو واتساب، بالإضافة إلى بيانات تصفح عامة (مثل نوع الجهاز والمتصفح) لتحسين تجربة الاستخدام.</p>
       </div>
       <div>
         <h3 class="font-display font-700 text-ink text-lg mb-2">3. ملفات تعريف الارتباط (Cookies) وأدوات التتبع</h3>
@@ -890,34 +937,29 @@ function getStatusInfo(statusRaw, typeRaw) {
 
   let label = isEn ? 'Available' : 'متاح';
   let badgeClass = 'bg-emerald-dark/85 text-emerald-100 border border-emerald-400/30 backdrop-blur-sm shadow-sm';
-  let isUnavailable = false;
 
   if (status === 'متاح' || status === 'available') {
     label = isEn ? 'Available' : 'متاح';
     badgeClass = 'bg-emerald-dark/85 text-emerald-100 border border-emerald-400/30 backdrop-blur-sm shadow-sm';
   } else if (status === 'تم البيع' || status === 'مباع' || status === 'sold') {
     label = isEn ? 'Sold' : 'تم البيع';
-    badgeClass = 'bg-red-950/85 text-red-200 border border-red-500/30 backdrop-blur-sm shadow-sm';
-    isUnavailable = true;
+    badgeClass = 'bg-red-950/90 text-red-100 border border-red-500/40 backdrop-blur-sm shadow-md';
   } else if (status === 'تم الإيجار' || status === 'مؤجر' || status === 'rented') {
     label = isEn ? 'Rented' : 'تم الإيجار';
-    badgeClass = 'bg-amber-950/85 text-amber-200 border border-amber-500/30 backdrop-blur-sm shadow-sm';
-    isUnavailable = true;
+    badgeClass = 'bg-amber-950/90 text-amber-100 border border-amber-500/40 backdrop-blur-sm shadow-md';
   } else if (status) {
     if (status.includes('بيع') || status.includes('sold')) {
       label = isEn ? 'Sold' : 'تم البيع';
-      badgeClass = 'bg-red-950/85 text-red-200 border border-red-500/30 backdrop-blur-sm shadow-sm';
-      isUnavailable = true;
+      badgeClass = 'bg-red-950/90 text-red-100 border border-red-500/40 backdrop-blur-sm shadow-md';
     } else if (status.includes('إيجار') || status.includes('rent')) {
       label = isEn ? 'Rented' : 'تم الإيجار';
-      badgeClass = 'bg-amber-950/85 text-amber-200 border border-amber-500/30 backdrop-blur-sm shadow-sm';
-      isUnavailable = true;
+      badgeClass = 'bg-amber-950/90 text-amber-100 border border-amber-500/40 backdrop-blur-sm shadow-md';
     } else {
       label = statusRaw;
     }
   }
 
-  return { label, badgeClass, isUnavailable };
+  return { label, badgeClass };
 }
 
 /* ============================================================
@@ -986,13 +1028,10 @@ function renderCard(p) {
       <!-- الباج الأول (أعلى يمين الصورة): نوع الوحدة -->
       <span class="badge-ribbon">${safeType}</span>
 
-      <!-- الباج الثاني (أسفل يسار الصورة): حالة العقار -->
+      <!-- الباج الثاني (أسفل يسار الصورة): حالة العقار - بدون أي تعتيم للصور -->
       <span class="absolute bottom-3 left-3 z-20 px-3 py-1 rounded-sm text-xs font-display font-700 tracking-wide ${statusInfo.badgeClass}">
         ${escapeHtml(statusInfo.label)}
       </span>
-
-      <!-- طبقة شفافة على الصورة في حال كان العقار غير متاح (مباع / مؤجر) -->
-      ${statusInfo.isUnavailable ? `<div class="absolute inset-0 bg-ink/35 backdrop-grayscale-[25%] z-10 pointer-events-none"></div>` : ''}
 
       <!-- حاوي صور السلايدر -->
       <a href="#unit-${p.slug}" class="block w-full h-full cursor-pointer" data-open-detail="${p.id}">
@@ -1096,9 +1135,9 @@ function renderCard(p) {
       const diff = touchEndX - touchStartX;
       if (Math.abs(diff) > 35) {
         if (diff < 0) {
-          goToSlide(currentIdx + 1); // سحب لليار -> الصورة التالية
+          goToSlide(currentIdx + 1);
         } else {
-          goToSlide(currentIdx - 1); // سحب لليمين -> الصورة السابقة
+          goToSlide(currentIdx - 1);
         }
       }
     }, { passive: true });
@@ -1138,7 +1177,7 @@ function populateFilters(list) {
   filterType.innerHTML = '<option value="">كل الأقسام</option>' + types.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
   filterLocation.innerHTML = '<option value="">كل المناطق</option>' + locations.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
 
-  statCount.textContent = list.length;
+  statCount.textContent = list.length + ' عقار متاح';
 }
 
 function applyFilters() {
